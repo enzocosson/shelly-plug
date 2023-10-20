@@ -20,20 +20,13 @@ function ShellyControl() {
 
   const toggleSwitch = () => {
     const newState = !isSwitchOn;
-    const deviceId = "80646F827174"; // Remplacez par l'ID de votre dispositif.
-    const authKey = "MWRmYzM2dWlkE62C6C4C76F817CE0A3D2902F5B5D4C115E49B28CF8539114D9246505DE5D368D560D06020A92480"; // Remplacez par votre clé d'authentification.
-  
-    // Utilisez l'URL du cloud Shelly pour allumer ou éteindre le relais.
-    const toggleUrl = `https://shelly-86-eu.shelly.cloud/device/relay/control?channel=0&turn=${newState ? "on" : "off"}&id=${deviceId}&auth_key=${authKey}`;
-  
-    // Envoyer une requête GET vers le cloud Shelly pour changer l'état du relais.
+    const url = `http://192.168.1.100/relay/0?turn=${newState ? "on" : "off"}`;
+
     axios
-      .get(toggleUrl)
+      .get(url)
       .then((response) => {
-        // La requête a réussi, mettez à jour l'état local
         setIsSwitchOn(newState);
-  
-        // Si l'appareil est allumé, envoyez les données à la base de données
+
         if (newState) {
           sendStateToDatabase(newState);
         }
@@ -42,46 +35,54 @@ function ShellyControl() {
         // Gérer les erreurs ici
         console.error("Erreur lors de la requête :", error);
       });
+      console.log(isSwitchOn)
   };
-  
 
   const updateSwitchState = () => {
-    const deviceId = "80646F827174"; // Remplacez par l'ID de votre dispositif.
-    const authKey = "MWRmYzM2dWlkE62C6C4C76F817CE0A3D2902F5B5D4C115E49B28CF8539114D9246505DE5D368D560D06020A92480"; // Remplacez par votre clé d'authentification.
-  
-    // Utilisez l'URL du cloud Shelly pour obtenir l'état du relais.
-    const statusUrl = `https://shelly-86-eu.shelly.cloud/device/status?id=${deviceId}&auth_key=${authKey}`;
-  
-    // Envoyer une requête GET vers le cloud Shelly pour obtenir l'état du relais.
+    // Envoyer une requête GET pour récupérer l'état du Shelly Plug
     axios
-      .get(statusUrl)
+      .get("http://192.168.1.100/status")
       .then((response) => {
-        // Extraire l'état du relais (ison) de la réponse
-        const isSwitchOn = response.data.relays[0].ison;
-        setIsSwitchOn(isSwitchOn);
+        console.log("Réponse de la requête :", response.data);
   
-        // Si l'appareil est allumé, envoyez les données à la base de données
-        if (isSwitchOn) {
-          sendStateToDatabase(isSwitchOn);
+        if (response.data.relays && Array.isArray(response.data.relays) && response.data.relays.length > 0) {
+          // Prendre la première entrée du tableau pour obtenir l'état du premier relais
+          const isSwitchOn = response.data.relays[0].ison;
+          setIsSwitchOn(isSwitchOn);
+        
+          // Si l'appareil est allumé, envoyez les données à la base de données
+          if (isSwitchOn) {
+            sendStateToDatabase(isSwitchOn);
+          }
+        } else {
+          // Si l'information n'est pas disponible, considérez l'appareil comme éteint
+          setIsSwitchOn(false);
         }
+        
       })
       .catch((error) => {
         // Gérer les erreurs ici
         console.error("Erreur lors de la récupération de l'état :", error);
       });
+
   };
   
+  
 
-  const sendStateToDatabase = (isOn) => {
-    // Créez l'objet avec les données à envoyer
+  const sendStateToDatabase = (ison) => {
     const data = {
-      isSwitchOn: isOn,
+      "@context": "/api/contexts/State",
+      "@type": "State",
+      isSwitchOn: ison,
       timestamp: new Date().toISOString(),
     };
   
-    // Envoyez une requête POST pour enregistrer les données dans la base de données
     axios
-      .post("https://127.0.0.1:8000/api/states", data)
+      .post("https://127.0.0.1:8000/api/states", data, {
+        headers: {
+          "Content-Type": "application/ld+json",
+        },
+      })
       .then((response) => {
         console.log("Données enregistrées avec succès :", response.data);
       })
@@ -91,7 +92,7 @@ function ShellyControl() {
       });
   };
   
-
+  
 
   return (
     <div className={styles.main}>
