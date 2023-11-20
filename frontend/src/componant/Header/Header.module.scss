@@ -1,0 +1,204 @@
+.main {
+  width: 18%;
+  height: 100%;
+  border-right: 1px solid #5e687254;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 2rem;
+
+  .container__nav {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    .logo {
+      width: 7rem;
+      color: var(--beige);
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 100;
+      color: var(--beige);
+
+      span {
+        font-size: 1.5rem;
+        font-weight: 500;
+        color: var(--yellow);
+      }
+    }
+
+    .container__profil {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+
+      .container__img__pp {
+        width: 5rem;
+        height: 5rem;
+        border-radius: 50%;
+        overflow: hidden;
+
+        .pp {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+      .profil__name {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: var(--beige);
+      }
+      .edit {
+        font-size: 0.9rem;
+        font-weight: 400;
+        color: var(--beige);
+        cursor: pointer;
+        background-color: transparent;
+        border: 1px solid #fcebdd4b;
+        padding: 0.1rem 1rem;
+        border-radius: 1rem;
+      }
+    }
+
+    nav {
+      ul {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        list-style: none;
+        gap: 10px;
+
+        li {
+          a {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            width: 180px;
+            height: 60px;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            color: var(--beige);
+            font-size: 1.2rem;
+            border-radius: 0.9rem;
+            gap: 5px;
+            font-weight: 100;
+            transition: 0.3s ease-in-out;
+
+            img {
+              width: 1rem;
+            }
+
+            &:hover {
+              background-color: #fcebdd14;
+              font-weight: 500;
+            }
+          }
+          .active {
+            background-color: #fcebdd14;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+  }
+  .switch {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    color: var(--beige);
+    .tgl {
+      appearance: none;
+      display: none;
+
+      // add default box-sizing for this scope
+      &,
+      &:after,
+      &:before,
+      & *,
+      & *:after,
+      & *:before,
+      & + .tgl-btn {
+        box-sizing: border-box;
+        &::selection {
+          background: none;
+        }
+      }
+
+      + .tgl_btn {
+        outline: 0;
+        display: block;
+        width: 4em;
+        height: 2em;
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+        &:after,
+        &:before {
+          position: relative;
+          display: block;
+          content: "";
+          width: 50%;
+          height: 100%;
+        }
+
+        &:after {
+          left: 0;
+        }
+
+        &:before {
+          display: none;
+        }
+      }
+
+      &:checked + .tgl_btn:after {
+        left: 50%;
+      }
+    }
+
+    .tgl_ios {
+      + .tgl_btn {
+        background: transparent;
+        border-radius: 2em;
+        padding: 2px;
+        transition: all 0.4s ease;
+        border: 1px solid #e8eae9;
+        &:after {
+          border-radius: 2em;
+          background: var(--yellow);
+          transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+            padding 0.3s ease, margin 0.3s ease;
+          box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 4px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        &:hover:after {
+          will-change: padding;
+        }
+
+        &:active {
+          box-shadow: inset 0 0 0 2em #e8eae9;
+          &:after {
+            padding-right: 0.8em;
+          }
+        }
+      }
+
+      &:checked + .tgl_btn {
+        background: #86d993;
+        &:active {
+          box-shadow: none;
+          &:after {
+            margin-left: -0.8em;
+          }
+        }
+      }
+    }
+  }
+}

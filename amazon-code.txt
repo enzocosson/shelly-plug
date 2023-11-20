@@ -1,0 +1,300 @@
+/* *
+ * This sample demonstrates handling intents from an Alexa skill using the Alexa Skills Kit SDK (v2).
+ * Please visit https://alexa.design/cookbook for additional examples on implementing slots, dialog management,
+ * session persistence, api calls, and more.
+ * */
+const axios = require("axios")
+const Alexa = require("ask-sdk-core");
+const id = "4022d88e30e8";
+const apiKey = "MWNiMjY5dWlk404459961993DCA83AE44BC6E3A6F58906952E7BECA0A5B69DC375C964915ACBC0EA536A0639CB73"
+
+const FormData = require("form-data");
+
+const ToggleShellyIntentHandler = {
+  canHandle(handlerInput) {
+    return (
+      Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest" &&
+      Alexa.getIntentName(handlerInput.requestEnvelope) === "toggleShelly"
+    );
+  },
+  async handle(handlerInput) {
+    let speakOutput = "";
+    let slotType =
+      handlerInput.requestEnvelope.request.intent.slots.status.value;
+    let data = new FormData();
+    let response = false;
+    data.append("id", id);
+    data.append("auth_key", apiKey);
+    data.append("channel", "0");
+    if (slotType === "éteint") {
+      data.append("turn", "off");
+      response = await togglePlug(data);
+      if (response === true) {
+        speakOutput = "La prise a été éteinte";
+      }
+    } else if (slotType === "allume") {
+      data.append("turn", "on");
+      response = await togglePlug(data);
+      if (response === true) {
+        speakOutput = "La prise a été allumée";
+      }
+    }
+
+    if (response === false) {
+      speakOutput = "Erreur lors de la manipulation de la prise";
+    }
+
+    return (
+      handlerInput.responseBuilder
+        .speak(speakOutput)
+        .getResponse()
+    );
+  },
+};
+
+const AskStatusPrise = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'ask_status';
+    },
+    async handle(handlerInput) {
+        let speakOutput = '';
+        try {
+            const response = await axios.get(`https://shelly-77-eu.shelly.cloud/device/status?id=${id}&auth_key=${apiKey}`);
+            const status = response.data.data.device_status.relays[0].ison;
+            speakOutput = `La prise est ${status ? 'allumée' : 'éteinte'}`;
+        } catch (error) {
+            console.error(error);
+            speakOutput = "Oups, une erreur s'est produite";
+        }
+    return handlerInput.responseBuilder
+        .speak(speakOutput)
+        //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+        .getResponse();
+    }
+};
+
+
+const AskWifiPrise = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'ask_wifi';
+    },
+    async handle(handlerInput) {
+        let speakOutput = '';
+        try {
+            const response = await axios.get(`https://shelly-77-eu.shelly.cloud/device/status?id=${id}&auth_key=${apiKey}`);
+            const status = response.data.data.device_status.wifi_sta.ssid;
+            speakOutput = `La wifi utilisée par la prise est ${status}`;
+        } catch (error) {
+            console.error(error);
+            speakOutput = "Oups, une erreur s'est produite";
+        }
+    return handlerInput.responseBuilder
+        .speak(speakOutput)
+        //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+        .getResponse();
+    }
+};
+
+
+
+const LaunchRequestHandler = {
+  canHandle(handlerInput) {
+    return (
+      Alexa.getRequestType(handlerInput.requestEnvelope) === "LaunchRequest"
+    );
+  },
+  handle(handlerInput) {
+    const speakOutput =
+      "Bienvenue sur Shelly Plug, comment puis-je vous aider ?";
+
+    return handlerInput.responseBuilder
+      .speak(speakOutput)
+      .reprompt(speakOutput)
+      .getResponse();
+  },
+};
+
+
+const HelloWorldIntentHandler = {
+  canHandle(handlerInput) {
+    return (
+      Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest" &&
+      Alexa.getIntentName(handlerInput.requestEnvelope) === "HelloWorldIntent"
+    );
+  },
+  handle(handlerInput) {
+    const speakOutput = "Hello World!";
+
+    return (
+      handlerInput.responseBuilder
+        .speak(speakOutput)
+        //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+        .getResponse()
+    );
+  },
+};
+
+const HelpIntentHandler = {
+  canHandle(handlerInput) {
+    return (
+      Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest" &&
+      Alexa.getIntentName(handlerInput.requestEnvelope) === "AMAZON.HelpIntent"
+    );
+  },
+  handle(handlerInput) {
+    const speakOutput = "You can say hello to me! How can I help?";
+
+    return handlerInput.responseBuilder
+      .speak(speakOutput)
+      .reprompt(speakOutput)
+      .getResponse();
+  },
+};
+
+const CancelAndStopIntentHandler = {
+  canHandle(handlerInput) {
+    return (
+      Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest" &&
+      (Alexa.getIntentName(handlerInput.requestEnvelope) ===
+        "AMAZON.CancelIntent" ||
+        Alexa.getIntentName(handlerInput.requestEnvelope) ===
+          "AMAZON.StopIntent")
+    );
+  },
+  handle(handlerInput) {
+    const speakOutput = "Goodbye!";
+
+    return handlerInput.responseBuilder.speak(speakOutput).getResponse();
+  },
+};
+/* *
+ * FallbackIntent triggers when a customer says something that doesn’t map to any intents in your skill
+ * It must also be defined in the language model (if the locale supports it)
+ * This handler can be safely added but will be ingnored in locales that do not support it yet
+ * */
+const FallbackIntentHandler = {
+  canHandle(handlerInput) {
+    return (
+      Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest" &&
+      Alexa.getIntentName(handlerInput.requestEnvelope) ===
+        "AMAZON.FallbackIntent"
+    );
+  },
+  handle(handlerInput) {
+    const speakOutput = "Sorry, I don't know about that. Please try again.";
+
+    return handlerInput.responseBuilder
+      .speak(speakOutput)
+      .reprompt(speakOutput)
+      .getResponse();
+  },
+};
+/* *
+ * SessionEndedRequest notifies that a session was ended. This handler will be triggered when a currently open
+ * session is closed for one of the following reasons: 1) The user says "exit" or "quit". 2) The user does not
+ * respond or says something that does not match an intent defined in your voice model. 3) An error occurs
+ * */
+const SessionEndedRequestHandler = {
+  canHandle(handlerInput) {
+    return (
+      Alexa.getRequestType(handlerInput.requestEnvelope) ===
+      "SessionEndedRequest"
+    );
+  },
+  handle(handlerInput) {
+    console.log(
+      `~~~~ Session ended: ${JSON.stringify(handlerInput.requestEnvelope)}`
+    );
+    // Any cleanup logic goes here.
+    return handlerInput.responseBuilder.getResponse(); // notice we send an empty response
+  },
+};
+/* *
+ * The intent reflector is used for interaction model testing and debugging.
+ * It will simply repeat the intent the user said. You can create custom handlers for your intents
+ * by defining them above, then also adding them to the request handler chain below
+ * */
+const IntentReflectorHandler = {
+  canHandle(handlerInput) {
+    return (
+      Alexa.getRequestType(handlerInput.requestEnvelope) === "IntentRequest"
+    );
+  },
+  handle(handlerInput) {
+    const intentName = Alexa.getIntentName(handlerInput.requestEnvelope);
+    const speakOutput = `You just triggered ${intentName}`;
+
+    return (
+      handlerInput.responseBuilder
+        .speak(speakOutput)
+        //.reprompt('add a reprompt if you want to keep the session open for the user to respond')
+        .getResponse()
+    );
+  },
+};
+/**
+ * Generic error handling to capture any syntax or routing errors. If you receive an error
+ * stating the request handler chain is not found, you have not implemented a handler for
+ * the intent being invoked or included it in the skill builder below
+ * */
+const ErrorHandler = {
+  canHandle() {
+    return true;
+  },
+  handle(handlerInput, error) {
+    const speakOutput =
+      "Sorry, I had trouble doing what you asked. Please try again.";
+    console.log(`~~~~ Error handled: ${JSON.stringify(error)}`);
+
+    return handlerInput.responseBuilder
+      .speak(speakOutput)
+      .reprompt(speakOutput)
+      .getResponse();
+  },
+};
+
+
+
+
+
+async function togglePlug(data) {
+  try {
+    const response = await axios.post(
+      "https://shelly-77-eu.shelly.cloud/device/relay/control",
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data.isok;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+}
+
+/**
+ * This handler acts as the entry point for your skill, routing all request and response
+ * payloads to the handlers above. Make sure any new handlers or interceptors you've
+ * defined are included below. The order matters - they're processed top to bottom
+ * */
+exports.handler = Alexa.SkillBuilders.custom()
+  .addRequestHandlers(
+    LaunchRequestHandler,
+/*    ShellyControlIntentHandler,*/
+    AskStatusPrise,
+    AskWifiPrise,
+    HelloWorldIntentHandler,
+    HelpIntentHandler,
+    CancelAndStopIntentHandler,
+    FallbackIntentHandler,
+    SessionEndedRequestHandler,
+    IntentReflectorHandler
+  )
+  .addErrorHandlers(ErrorHandler)
+  .withCustomUserAgent("sample/hello-world/v1.2")
+  .lambda();
